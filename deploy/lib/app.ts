@@ -27,13 +27,29 @@ export class Application extends cdk.Stack {
             }
         }
     )
+    const NewUserFn = new lambda.Function(
+        this,
+        "MultiRegFunctNewUser",
+        {
+            runtime: lambda.Runtime.PYTHON_3_8,
+            handler: "newuser.lambda_handler",
+            code: lambda.Code.fromAsset(
+                "../application/app.zip"
+            ),
+            environment: {
+                "TABLE_NAME": tableName
+            }
+        }
+    )
     AllUserFn.role?.addManagedPolicy(ManagedPolicy.fromAwsManagedPolicyName("AmazonDynamoDBFullAccess"))
+    NewUserFn.role?.addManagedPolicy(ManagedPolicy.fromAwsManagedPolicyName("AmazonDynamoDBFullAccess"))
     const api = new apigateway.RestApi(this, "MultiAppGw", {
         endpointTypes: [apigateway.EndpointType.REGIONAL]
     });
     const integration = new apigateway.LambdaIntegration(AllUserFn)
     const users = api.root.addResource("users");
     const allUsers = users.addMethod("GET", integration, { apiKeyRequired: false})
+    const adduser = users.addMethod("PUT", new apigateway.LambdaIntegration(NewUserFn), {apiKeyRequired: false})
     const DNSZone = route53.HostedZone.fromHostedZoneAttributes(this, "DnsZone", {
         hostedZoneId: zoneId,
         zoneName: zoneName

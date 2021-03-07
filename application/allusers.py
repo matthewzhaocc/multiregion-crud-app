@@ -11,7 +11,7 @@ def lambda_handler(event, context):
     return {
         "body": json.dumps(client.scan(
             TableName=os.environ["TABLE_NAME"]
-        ["Items"])),
+        )["Items"]),
         "headers": {
             "Content-Type": "application/json"
         }
