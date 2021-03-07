@@ -68,10 +68,27 @@ export class Application extends cdk.Stack {
     const rec = new route53.CnameRecord(this, "AliastoAPI", {
         zone: DNSZone,
         recordName: props?.env?.region + "." + "multiapp",
-        domainName: domain.domainNameAliasDomainName
+        domainName: domain.domainNameAliasDomainName,
+        
         
     })
+    const cert2 = new acm.Certificate(this, "cert2", {
+        domainName: "dev-"+props?.env?.region+"."+domainName,
+        validation: acm.CertificateValidation.fromDns(DNSZone)
+    })
+    const domain2 = new apigateway.DomainName(this, "multiapp2", {
+        domainName: "dev-"+props?.env?.region+"."+domainName,
+        certificate: cert2,
+        endpointType: apigateway.EndpointType.REGIONAL,
+        securityPolicy: apigateway.SecurityPolicy.TLS_1_2
+    })
+    domain2.addBasePathMapping(api)
+    const rec2 = new route53.CnameRecord(this, "dev-alias", {
+        zone: DNSZone,
+        recordName: "dev-"+props?.env?.region+"."+domainName,
+        domainName: domain2.domainNameAliasDomainName
+    })
   }
-    
+ 
 }
 
